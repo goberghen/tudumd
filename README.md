@@ -1,12 +1,12 @@
 tudumd — Markdown-native fork of TuDu (0.10.5)
 ==============================================
 
-`tudumd` is a Markdown-native fork of TuDu (originally written by Ruben Pollan
+`tudumd` is a Markdown-native fork of [TuDu](https://github.com/meskio/tudu) ([originally written](http://code.meskio.net/tudu) by Ruben Pollan
 Bella <meskio@sindominio.net>). It preserves the complete ncurses hierarchical
 TUI, keybindings, categories, priorities, deadlines, scheduled tasks, and
 theming of TuDu while replacing the default XML storage backend with clean,
 human-readable Markdown stored according to the XDG Base Directory
-Specification.
+Specification. Vibe-coded with AI agents.
 
 Key additions in the `tudumd` fork (by goberghen & Arena.ai Agent, 2026):
   * Native Markdown (`.md`) parser and writer compatible with Okular,
@@ -45,12 +45,14 @@ Install
 character support, e.g. `libncurses-dev` on Debian/Ubuntu).
 
 To compile and install from source:
+```
   $ ./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share/man
   $ make
   # make install
+```
 
 To build an installable Debian/Ubuntu `.deb` package:
-  $ ./build-deb.sh
+  `$ ./build-deb.sh`
 
 
 Usage
@@ -85,5 +87,5 @@ Notes from Original TuDu README
   characters. In such cases you can enable `(+)` for collapsed parent tasks and
   `(-)` for expanded parent tasks by setting in your config file:
 
-  [ general ]
+  [ general ]  
   visual_tree = yes
