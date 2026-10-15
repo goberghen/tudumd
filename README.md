@@ -86,6 +86,7 @@ Notes from Original TuDu README
 * Some terminal environments do not distinguish bold characters from normal
   characters. In such cases you can enable `(+)` for collapsed parent tasks and
   `(-)` for expanded parent tasks by setting in your config file:
-
-  [ general ]  
+```
+  [ general ]
   visual_tree = yes
+```
