@@ -11,3 +11,11 @@ tags
 /*.c
 /*.png
 /*.jpg
+/_*.md
+/_*.md.bkp
+/_*.md.bak
+/.*.md_lock
+/_*.markdown
+/_*.markdown.bkp
+/_*.markdown.bak
+/.*.markdown_lock
