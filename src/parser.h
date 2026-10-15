@@ -1,20 +1,12 @@
-
 /**************************************************************************
- * Copyright (C) 2007-2015 Ruben Pollan Bella <meskio@sindominio.net>     *
+ * Copyright (C) 2007-2020 Ruben Pollan Bella <meskio@sindominio.net>     *
+ * Copyright (C) 2026 goberghen & Arena.ai Agent (tudumd Markdown fork)   *
  *                                                                        *
- *  This file is part of TuDu.                                            *
+ *  This file is part of tudumd (a Markdown-native fork of TuDu).         *
  *                                                                        *
- *  TuDu is free software; you can redistribute it and/or modify          *
+ *  tudumd is free software; you can redistribute it and/or modify        *
  *  it under the terms of the GNU General Public License as published by  *
- *  the Free Software Foundation; version 3 of the License.        *
- *                                                                        *
- *  TuDu is distributed in the hope that it will be useful,               *
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *  GNU General Public License for more details.                          *
- *                                                                        *
- *  You should have received a copy of the GNU General Public License     *
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+ *  the Free Software Foundation; version 3 of the License.               *
  **************************************************************************/
 
 #ifndef PARSER_H
@@ -24,7 +16,6 @@
 #include "data.h"
 #include "scheduler.h"
 #include "text.h"
-
 
 class Parser
 {
@@ -40,6 +31,12 @@ private:
 	bool collect_text;
 	bool deadline;
 	bool scheduled;
+	bool first_todo;
+
+	bool parseXml(ToDo& todo, Sched& sched);
+	bool parseMarkdown(ToDo& todo, Sched& sched);
+	void parseTaskLine(const wstring& rest, bool is_done, iToDo& iterator, Sched& sched);
+	bool parseDateToken(const wstring& spec, int& d, int& m, int& y, int& pos);
 
 	void ptag(iToDo& iterator, Sched& sched);
 	void patt(iToDo& iterator);
@@ -52,15 +49,14 @@ public:
 	Writer(const char* pathToSave, ToDo& t);
 	~Writer();
 
-	bool save(); /* return if was succesfull */
+	bool save(); /* return if was successful */
 private:
 	wofstream file;
 	ToDo& todo;
 	iToDo* i;
-	char path[256];
+	char path[4096];
 
 	void _save();
-	void amp(wstring& str);
 };
 
 #endif

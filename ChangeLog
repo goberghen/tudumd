@@ -1,3 +1,12 @@
+0.10.5
+	* Renamed project and binary to tudumd for side-by-side installation with tudu
+	* Replaced default XML storage with XDG-compliant Markdown (~/.local/share/tudumd/tudu.md)
+	* Moved default user configuration to XDG path (~/.config/tudumd/tudumdrc)
+	* Added multi-line blockquote descriptions compatible with Okular, Ghostwriter, and Quillpad
+	* Added fail-safe parser error handling and rolling backup in /tmp/tudu.md.bak
+	* Added standalone tuduconvert utility (XML <-> Markdown)
+	* Added desktop launcher (Terminal=true) and TUI todo vector icon
+
 0.10.4
 	* Fixed a possible division by zero
 	* Silence a compilation warning

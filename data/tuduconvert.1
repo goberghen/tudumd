@@ -1,0 +1,50 @@
+.\"  Copyright (C) 2026 goberghen & Arena.ai Agent
+.\"  License: GPL-3.0-or-later
+.TH TUDUCONVERT 1 "October 2026" "tudumd 0.10.5" "User Manuals"
+.SH NAME
+tuduconvert \- bidirectional converter between TuDu XML and tudumd Markdown files
+.SH SYNOPSIS
+.B tuduconvert
+\fIinput.xml\fR \fIoutput.md\fR
+.br
+.B tuduconvert
+\fIinput.md\fR \fIoutput.xml\fR
+.SH DESCRIPTION
+\fBtuduconvert\fR is a standalone converter utility included with \fBtudumd\fR(1)
+that converts hierarchical TODO lists between legacy \fBTuDu\fR XML (\fB.xml\fR)
+and \fBtudumd\fR Markdown (\fB.md\fR) in both directions without losing any task
+metadata (hierarchy, done state, collapse state, priority, categories, deadline,
+scheduled date, scheduled order, or multi-line descriptions).
+.PP
+When converting from XML to Markdown (\fB.xml \(-> .md\fR), \fBtuduconvert\fR also
+reads \fBsort_order\fR from \fI$XDG_CONFIG_HOME/tudumd/tudumdrc\fR
+(\fI~/.config/tudumd/tudumdrc\fR), \fI~/.tudumdrc\fR, \fI~/.tudurc\fR, or
+\fI/etc/tudumdrc\fR (defaulting to \fBlpu\fR: deadline, priority, user order)
+so the generated Markdown document is ordered identically to the \fBtudumd\fR TUI view.
+.SH OPTIONS
+.IP "\fB\-h\fR, \fB\-\-help\fR"
+Display usage instructions and exit.
+.SH EXAMPLES
+Convert an existing legacy \fI~/.tudu.xml\fR file to the XDG default location:
+.PP
+.nf
+.RS
+tuduconvert ~/.tudu.xml ~/.local/share/tudumd/tudu.md
+.RE
+.fi
+.PP
+Export a \fBtudumd\fR Markdown file back to legacy XML format:
+.PP
+.nf
+.RS
+tuduconvert ~/.local/share/tudumd/tudu.md backup.xml
+.RE
+.fi
+.SH FILES
+.IP "\fI$XDG_CONFIG_HOME/tudumd/tudumdrc\fR, \fI~/.tudumdrc\fR, \fI~/.tudurc\fR, \fI/etc/tudumdrc\fR"
+Read to determine the \fBsort_order\fR when converting from XML to Markdown.
+.SH SEE ALSO
+.BR tudumd (1)
+.SH AUTHORS
+Original TuDu format by Ruben Pollan Bella <meskio@sindominio.net>.
+\fBtuduconvert\fR was written by goberghen & Arena.ai Agent (2026).

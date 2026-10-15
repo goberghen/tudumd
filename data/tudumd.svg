@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="termBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e2631"/>
+      <stop offset="100%" stop-color="#12171e"/>
+    </linearGradient>
+    <linearGradient id="titleBar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#293545"/>
+      <stop offset="100%" stop-color="#202a37"/>
+    </linearGradient>
+    <linearGradient id="tuiPipe" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1d6fa5"/>
+      <stop offset="100%" stop-color="#2980b9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer Terminal Window Shadow & Body -->
+  <rect x="3" y="5" width="58" height="54" rx="6" fill="#0a0d12" opacity="0.45"/>
+  <rect x="3" y="4" width="58" height="54" rx="6" fill="url(#termBg)" stroke="#3daee9" stroke-width="1.5"/>
+
+  <!-- Terminal Top Titlebar -->
+  <path d="M 4.5 10 A 4.5 4.5 0 0 1 9 5.5 L 55 5.5 A 4.5 4.5 0 0 1 59.5 10 L 59.5 15 L 4.5 15 Z" fill="url(#titleBar)"/>
+  <line x1="3.5" y1="15" x2="60.5" y2="15" stroke="#3daee9" stroke-width="1"/>
+
+  <!-- Terminal Prompt ">_" in Titlebar -->
+  <path d="M 8 8.2 L 11 10.2 L 8 12.2" fill="none" stroke="#3daee9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="12.5" y1="12.2" x2="16" y2="12.2" stroke="#3daee9" stroke-width="1.6" stroke-linecap="round"/>
+
+  <!-- ".MD" Badge in Titlebar -->
+  <rect x="24" y="7" width="16" height="6.2" rx="1.5" fill="#1d6fa5"/>
+  <text x="32" y="11.6" font-family="monospace" font-size="5.2" font-weight="bold" fill="#ffffff" text-anchor="middle">.MD</text>
+
+  <!-- Window Control Dots -->
+  <circle cx="48" cy="10.2" r="1.6" fill="#fdbc4b"/>
+  <circle cx="52.5" cy="10.2" r="1.6" fill="#2ecc71"/>
+  <circle cx="57" cy="10.2" r="1.6" fill="#ed1515"/>
+
+  <!-- TUI Split-Pane Blue Pipes (Tree | Schedule, and bottom Text pane) -->
+  <rect x="44" y="15.5" width="2" height="28.5" fill="url(#tuiPipe)"/>
+  <rect x="4" y="43" width="56" height="2" fill="url(#tuiPipe)"/>
+
+  <!-- Task 1: Top-level Done Task [x] -->
+  <rect x="7.5" y="18.5" width="5.5" height="5.5" rx="1" fill="none" stroke="#2ecc71" stroke-width="1.3"/>
+  <path d="M 8.7 21.2 L 10.0 22.6 L 12.1 19.6" fill="none" stroke="#2ecc71" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="15.5" y="20" width="20" height="2.6" rx="1.2" fill="#95a5a6"/>
+
+  <!-- Task 2: Indented Subtask Done └─ [x] -->
+  <path d="M 10 25.5 L 10 29.2 L 13 29.2" fill="none" stroke="#5c7080" stroke-width="1.2" stroke-linecap="round"/>
+  <rect x="14.5" y="26.5" width="5.5" height="5.5" rx="1" fill="none" stroke="#2ecc71" stroke-width="1.3"/>
+  <path d="M 15.7 29.2 L 17.0 30.6 L 19.1 27.6" fill="none" stroke="#2ecc71" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="22.5" y="28" width="16" height="2.6" rx="1.2" fill="#bdc3c7"/>
+
+  <!-- Task 3: Active Selected Cursor Row in TUI (Highlighted Green Bar) -->
+  <rect x="5.5" y="34.2" width="37" height="7" rx="1.5" fill="#2ecc71" opacity="0.22"/>
+  <path d="M 7.2 36.2 L 9.4 37.7 L 7.2 39.2" fill="none" stroke="#2ecc71" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="11.5" y="35" width="5.5" height="5.5" rx="1" fill="none" stroke="#2ecc71" stroke-width="1.4"/>
+  <rect x="19.5" y="36.4" width="16.5" height="2.8" rx="1.2" fill="#2ecc71"/>
+  <!-- Priority !1 Indicator -->
+  <rect x="37.5" y="35.7" width="3.8" height="4.2" rx="0.8" fill="#e74c3c"/>
+
+  <!-- Right TUI Pane: Schedule / Calendar Preview -->
+  <rect x="48" y="18.5" width="9.5" height="2.2" rx="1" fill="#3daee9"/>
+  <rect x="48" y="23" width="7.5" height="2" rx="0.8" fill="#7f8c8d"/>
+  <rect x="48" y="27" width="9" height="2" rx="0.8" fill="#e74c3c"/>
+  <rect x="48" y="31" width="6.5" height="2" rx="0.8" fill="#7f8c8d"/>
+
+  <!-- Bottom TUI Pane: Markdown "> " Description & Status Bar -->
+  <path d="M 7.5 47.5 L 9.5 49 L 7.5 50.5" fill="none" stroke="#3daee9" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="12" y="47.8" width="28" height="2.2" rx="1" fill="#7f8c8d"/>
+  <rect x="12" y="51.8" width="19" height="2.2" rx="1" fill="#5c7080"/>
+  <rect x="47" y="51.2" width="10" height="3" rx="1" fill="#2ecc71" opacity="0.85"/>
+</svg>

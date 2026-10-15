@@ -1,48 +1,89 @@
-The development of this project is not active. I will be happy to review patches
-and to do releases, but I'm not sure if I will be able to do any active
-development myself.
+tudumd — Markdown-native fork of TuDu (0.10.5)
+==============================================
+
+`tudumd` is a Markdown-native fork of TuDu (originally written by Ruben Pollan
+Bella <meskio@sindominio.net>). It preserves the complete ncurses hierarchical
+TUI, keybindings, categories, priorities, deadlines, scheduled tasks, and
+theming of TuDu while replacing the default XML storage backend with clean,
+human-readable Markdown stored according to the XDG Base Directory
+Specification.
+
+Key additions in the `tudumd` fork (by goberghen & Arena.ai Agent, 2026):
+  * Native Markdown (`.md`) parser and writer compatible with Okular,
+    Ghostwriter, Quillpad, and CommonMark/GFM viewers.
+  * Full XDG Base Directory Specification compliance (no dotfiles created in
+    the root of `~/`):
+      - Default task list:   `$XDG_DATA_HOME/tudumd/tudu.md`
+                             (defaults to `~/.local/share/tudumd/tudu.md`)
+      - Default user config: `$XDG_CONFIG_HOME/tudumd/tudumdrc`
+                             (defaults to `~/.config/tudumd/tudumdrc`)
+  * Preserves all TuDu fields in Markdown: hierarchy (4-space indentation),
+    done status (`- [ ]` / `- [x]`), collapse state (`[+]`), priority
+    (`!1`..`!5`), categories (`#work`, `#home`), deadlines
+    (`@due(dd.mm.yyyy)`), scheduled dates (`@sched(dd.mm.yyyy)`), and
+    multi-line descriptions (`> ` blockquotes with two trailing spaces).
+  * Automatic read-only backward compatibility for legacy TuDu `.xml` files
+    (including automatic one-time migration of `~/.tudu.md` or `~/.tudu.xml`
+    into `~/.local/share/tudumd/tudu.md` on first run).
+  * Fail-safe parser protection: if an existing `.md` or `.xml` file contains a
+    syntax error, `tudumd` reports the line number and exits without modifying
+    or overwriting your file with the welcome template.
+  * Single rolling backup in `/tmp/tudu.md.bak` on every save (no `.bak` file
+    clutter in working directories).
+  * Includes `tuduconvert`, a standalone bidirectional CLI converter between
+    `.xml` and `.md` (`tuduconvert tudu.xml newtudu.md` and
+    `tuduconvert tudu.md newtudu.xml`).
+  * Includes a freedesktop `.desktop` launcher (`Terminal=true`) and vector SVG
+    icon (`tudumd.svg`) to launch `tudumd` directly in a terminal from the
+    desktop application menu.
+
 
 Install
 =======
 
- TuDu needs ncurses library with wide characters (in some systems is known as 
- ncursesw) for work. You will need to install it for compile it.
+`tudumd` requires a C++ compiler and the `ncursesw` library (ncurses with wide
+character support, e.g. `libncurses-dev` on Debian/Ubuntu).
 
- For compiling the program execute:
- $ ./configure
- $ make
+To compile and install from source:
+  $ ./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share/man
+  $ make
+  # make install
 
- For installing the program execute (as root):
- # make install
+To build an installable Debian/Ubuntu `.deb` package:
+  $ ./build-deb.sh
 
 
 Usage
 =====
 
-Usage: tudu [options]
-        -f file load tudu file
-        -c file load specific config file
+Usage: tudumd [options]
+        -f file   load tudumd markdown (or legacy xml) file
+        -c file   load specific config file
+        -v        show version
+        -vv       show license and copyright
+        -h        show usage message
 
-        -v      show version
-        -h      show this usage message
+Converter utility:
+        tuduconvert input.xml output.md
+        tuduconvert input.md  output.xml
 
-The default config file is in ~/.tudurc
-The file tudurc in the source code is an example of config file.
-
-
-Notes
-=====
-
-* Since version 0.8 the theme config deadlineMark now is call warn, because is
-not use just for the deadline is also use for the past sched.
+Default files:
+  * Default task file:   $XDG_DATA_HOME/tudumd/tudu.md (~/.local/share/tudumd/tudu.md)
+  * User config file:    $XDG_CONFIG_HOME/tudumd/tudumdrc (~/.config/tudumd/tudumdrc)
+  * Global config file:  /etc/tudumdrc (fallback: /etc/tudurc)
+  * Session lock file:   ~/.local/share/tudumd/.tudu.md_lock
+  * Rolling backup file: /tmp/tudu.md.bak
 
 
-* Some environments (like Konsole of KDE3) don't show well the tasks that have
-childs. The normal way to show them is because they are bold, but in some 
-shells the bold characters are indistinguishable of the normal ones. For that
-cases (or others) there is the posibility of show "(+)", for the collapsed 
-tasks, and "(-)", for the expanded tasks, at the left of them. This option is
-activated on the config file by the option:
+Notes from Original TuDu README
+===============================
 
-[ general ]
-visual_tree  = yes
+* Since version 0.8 the theme config `deadlineMark` is called `warn`, because it
+  is used not only for deadlines but also for past scheduled tasks.
+
+* Some terminal environments do not distinguish bold characters from normal
+  characters. In such cases you can enable `(+)` for collapsed parent tasks and
+  `(-)` for expanded parent tasks by setting in your config file:
+
+  [ general ]
+  visual_tree = yes

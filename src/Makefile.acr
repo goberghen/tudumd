@@ -2,6 +2,7 @@ VPATH=@VPATH@
 PKGNAME=@PKGNAME@
 VERSION=@VERSION@
 INSTALL_PROGRAM=@INSTALL_PROGRAM@
+INSTALL_SCRIPT=@INSTALL_SCRIPT@
 .PHONY: all install uninstall clean mrproper
 CXX=@CXX@
 CXXFLAGS=@CXXFLAGS@
@@ -26,12 +27,14 @@ $(PKGNAME): $(OBJS)
 install: all
 	mkdir -p $(DESTDIR)$(BINDIR)
 	$(INSTALL_PROGRAM) $(PKGNAME) $(DESTDIR)$(BINDIR)
+	$(INSTALL_SCRIPT) ../tuduconvert $(DESTDIR)$(BINDIR)/tuduconvert
 
 clean:
 	@rm -f $(PKGNAME) $(OBJS) core tags
 
 mrproper: clean
-	rm Makefile defs.h
+	rm -f Makefile defs.h
 
 uninstall:
-	rm $(DESTDIR)$(BINDIR)/$(PKGNAME)
+	rm -f $(DESTDIR)$(BINDIR)/$(PKGNAME)
+	rm -f $(DESTDIR)$(BINDIR)/tuduconvert

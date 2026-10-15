@@ -106,7 +106,7 @@ void Cmd::help(vector<wstring> &params)
 {
 	char* argv[3];
 	char argv0[] = "man";
-	char argv1[] = "tudu";
+	char argv1[] = "tudumd";
 	argv[0] = argv0;
 	argv[1] = argv1;
 	argv[2] = NULL;

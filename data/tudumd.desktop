@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=TuDuMD
+GenericName=Terminal TODO List Manager
+GenericName[ru]=Консольный менеджер задач (TUI)
+Comment=Hierarchical TUI TODO list manager in the terminal using Markdown files
+Comment[ru]=Иерархический TUI-менеджер задач в терминале с хранением в Markdown
+TryExec=tudumd
+Exec=tudumd
+Icon=tudumd
+Terminal=true
+Categories=Utility;ConsoleOnly;Office;ProjectManagement;
+Keywords=todo;task;tui;markdown;terminal;ncurses;tudumd;tudu;
+StartupNotify=false

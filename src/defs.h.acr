@@ -1,14 +1,14 @@
-
 /**************************************************************************
- * Copyright (C) 2007-2011 Ruben Pollan Bella <meskio@sindominio.net>     *
+ * Copyright (C) 2007-2020 Ruben Pollan Bella <meskio@sindominio.net>     *
+ * Copyright (C) 2026 goberghen & Arena.ai Agent (tudumd Markdown fork)   *
  *                                                                        *
- *  This file is part of TuDu.                                            *
+ *  This file is part of tudumd (a Markdown-native fork of TuDu).         *
  *                                                                        *
- *  TuDu is free software; you can redistribute it and/or modify          *
+ *  tudumd is free software; you can redistribute it and/or modify        *
  *  it under the terms of the GNU General Public License as published by  *
- *  the Free Software Foundation; version 3 of the License.        *
+ *  the Free Software Foundation; version 3 of the License.               *
  *                                                                        *
- *  TuDu is distributed in the hope that it will be useful,               *
+ *  tudumd is distributed in the hope that it will be useful,             *
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of        *
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *  GNU General Public License for more details.                          *
@@ -17,11 +17,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  **************************************************************************/
 
-#define VERSION_STR "TuDu @VERSION@ (@YEAR@)"
+#define VERSION_STR "tudumd @VERSION@ (@YEAR@)"
 
 #define SHARE_DIR "@DATADIR@/@PKGNAME@"
-#define WELCOME_FILE "@DATADIR@/@PKGNAME@/welcome.xml"
-#define CONFIG_FILE "@SYSCONFDIR@/tudurc"
+#define WELCOME_FILE "@DATADIR@/@PKGNAME@/welcome.md"
+#define CONFIG_FILE "@SYSCONFDIR@/tudumdrc"
 #define PATH_DTD "@DATADIR@/@PKGNAME@/tudu.dtd"
 
 

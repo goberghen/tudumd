@@ -1,0 +1,582 @@
+#!/usr/bin/env bash
+# tuduconvert - Convert between TuDu XML and Markdown formats in both directions.
+# Usage:
+#   tuduconvert input.xml [output.md]
+#   tuduconvert input.md  [output.xml]
+
+set -euo pipefail
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") <input_file> [output_file]
+
+Examples:
+  $(basename "$0") tudu.xml newtudu.md
+  $(basename "$0") tudu.md newtudu.xml
+EOF
+    exit 1
+}
+
+if [[ $# -lt 1 || $# -gt 2 || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    usage
+fi
+
+IN_FILE="$1"
+if [[ ! -f "$IN_FILE" ]]; then
+    echo "Error: input file '$IN_FILE' does not exist." >&2
+    exit 1
+fi
+
+# Detect input format by first non-whitespace character ('<' = XML, otherwise Markdown)
+FIRST_CHAR="$(awk '{
+    for (i = 1; i <= length($0); i++) {
+        c = substr($0, i, 1)
+        if (c != " " && c != "\t" && c != "\r") {
+            print c
+            exit
+        }
+    }
+}' "$IN_FILE")"
+
+if [[ $# -eq 2 ]]; then
+    OUT_FILE="$2"
+else
+    if [[ "$FIRST_CHAR" == "<" ]]; then
+        OUT_FILE="${IN_FILE%.xml}.md"
+        [[ "$OUT_FILE" == "$IN_FILE" ]] && OUT_FILE="${IN_FILE}.md"
+    else
+        OUT_FILE="${IN_FILE%.md}.xml"
+        [[ "$OUT_FILE" == "$IN_FILE" ]] && OUT_FILE="${IN_FILE}.xml"
+    fi
+fi
+
+xml_to_md() {
+    local sort_order="lpu"
+    local xdg_cfg="${XDG_CONFIG_HOME:-$HOME/.config}/tudumd/tudumdrc"
+    for rc in /etc/tudurc /etc/tudumdrc /usr/local/etc/tudurc /usr/local/etc/tudumdrc "$HOME/.tudurc" "$HOME/.tudumdrc" "$xdg_cfg"; do
+        if [[ -f "$rc" ]]; then
+            local val
+            val="$(awk -F= '/^[ \t]*sort_order[ \t]*=/ {
+                sub(/#.*$/, "", $2)
+                gsub(/[ \t\r]/, "", $2)
+                if ($2 != "") print $2
+            }' "$rc" | tail -n 1)"
+            [[ -n "$val" ]] && sort_order="$val"
+        fi
+    done
+
+    awk -v sort_order="$sort_order" '
+    function unescape_xml(s) {
+        gsub(/&lt;/, "<", s)
+        gsub(/&gt;/, ">", s)
+        gsub(/&amp;/, "\\&", s)
+        return s
+    }
+
+    function make_indent(d,    s, k) {
+        s = ""
+        for (k = 0; k < d; k++) s = s "    "
+        return s
+    }
+
+    BEGIN {
+        n_nodes = 0
+        sp = 0
+        in_text = 0
+        in_deadline = 0
+        in_sched = 0
+        if (index(sort_order, "u") == 0 && index(sort_order, "U") == 0) {
+            sort_order = sort_order "u"
+        }
+    }
+
+    {
+        line = $0
+        sub(/\r$/, "", line)
+
+        if (in_text) {
+            if (line ~ /<\/text>/) {
+                sub(/<\/text>.*$/, "", line)
+                if (line != "") {
+                    text_buf = (text_buf == "" ? line : text_buf "\n" line)
+                }
+                node_text[cur] = unescape_xml(text_buf)
+                in_text = 0
+            } else {
+                text_buf = (text_buf == "" ? line : text_buf "\n" line)
+            }
+            next
+        }
+
+        if (line ~ /<todo[ \t>]/ && line !~ /^<todo>[ \t]*$/) {
+            n_nodes++
+            id = n_nodes
+            parent = (sp > 0 ? stack[sp] : 0)
+            node_parent[id] = parent
+            node_depth[id] = sp
+            child_count[parent]++
+            children[parent, child_count[parent]] = id
+
+            node_done[id] = (line ~ /done="yes"/) ? 1 : 0
+            node_collapse[id] = (line ~ /collapse="yes"/) ? 1 : 0
+            node_order[id] = child_count[parent]
+            node_title[id] = ""
+            node_prio[id] = ""
+            node_cats[id] = ""
+            node_cat_str[id] = ""
+            node_dl_d[id] = ""; node_dl_m[id] = ""; node_dl_y[id] = ""
+            node_sc_d[id] = ""; node_sc_m[id] = ""; node_sc_y[id] = ""; node_sc_pos[id] = "1"
+            node_text[id] = ""
+
+            sp++
+            stack[sp] = id
+            cur = id
+            next
+        }
+
+        if (line ~ /<\/todo>/) {
+            if (sp > 0) {
+                sp--
+                cur = (sp > 0 ? stack[sp] : 0)
+            }
+            next
+        }
+
+        if (sp == 0) next
+
+        if (line ~ /<title>.*<\/title>/) {
+            t = line
+            sub(/^.*<title>/, "", t)
+            sub(/<\/title>.*$/, "", t)
+            node_title[cur] = unescape_xml(t)
+            next
+        }
+
+        if (line ~ /<priority>.*<\/priority>/) {
+            p = line
+            sub(/^.*<priority>/, "", p)
+            sub(/<\/priority>.*$/, "", p)
+            node_prio[cur] = p
+            next
+        }
+
+        if (line ~ /<category>.*<\/category>/) {
+            c = line
+            sub(/^.*<category>/, "", c)
+            sub(/<\/category>.*$/, "", c)
+            c = unescape_xml(c)
+            node_cats[cur] = (node_cats[cur] == "" ? "#" c : node_cats[cur] " #" c)
+            node_cat_str[cur] = (node_cat_str[cur] == "" ? c : node_cat_str[cur] "," c)
+            next
+        }
+
+        if (line ~ /<deadline>/)  { in_deadline = 1; next }
+        if (line ~ /<\/deadline>/) { in_deadline = 0; next }
+        if (line ~ /<scheduled>/)  { in_sched = 1; next }
+        if (line ~ /<\/scheduled>/) { in_sched = 0; next }
+
+        if (line ~ /<day>.*<\/day>/) {
+            v = line; sub(/^.*<day>/, "", v); sub(/<\/day>.*$/, "", v)
+            if (in_deadline) node_dl_d[cur] = v
+            else if (in_sched) node_sc_d[cur] = v
+            next
+        }
+        if (line ~ /<month>.*<\/month>/) {
+            v = line; sub(/^.*<month>/, "", v); sub(/<\/month>.*$/, "", v)
+            if (in_deadline) node_dl_m[cur] = v
+            else if (in_sched) node_sc_m[cur] = v
+            next
+        }
+        if (line ~ /<year>.*<\/year>/) {
+            v = line; sub(/^.*<year>/, "", v); sub(/<\/year>.*$/, "", v)
+            if (in_deadline) node_dl_y[cur] = v
+            else if (in_sched) node_sc_y[cur] = v
+            next
+        }
+        if (line ~ /<position>.*<\/position>/) {
+            v = line; sub(/^.*<position>/, "", v); sub(/<\/position>.*$/, "", v)
+            if (in_sched) node_sc_pos[cur] = v
+            next
+        }
+
+        if (line ~ /<text>/) {
+            t = line
+            sub(/^.*<text>/, "", t)
+            if (t ~ /<\/text>/) {
+                sub(/<\/text>.*$/, "", t)
+                node_text[cur] = unescape_xml(t)
+            } else {
+                text_buf = t
+                in_text = 1
+            }
+            next
+        }
+    }
+
+    function date_key(y, m, d) {
+        if (y == "" || m == "" || d == "") return 99999999
+        return (y + 0) * 10000 + (m + 0) * 100 + (d + 0)
+    }
+
+    function prio_key(p) {
+        if (p == "" || (p + 0) <= 0) return 6
+        return (p + 0)
+    }
+
+    function compute_chinf(id,    i, ch) {
+        for (i = 1; i <= child_count[id]; i++) {
+            ch = children[id, i]
+            compute_chinf(ch)
+        }
+        if (id == 0) return
+
+        eff_done[id] = node_done[id]
+        if (!eff_done[id] && child_count[id] > 0) {
+            eff_done[id] = 1
+            for (i = 1; i <= child_count[id]; i++) {
+                ch = children[id, i]
+                if (!eff_done[ch]) {
+                    eff_done[id] = 0
+                    break
+                }
+            }
+        }
+
+        ch_prio[id] = 6
+        ch_dl[id] = 99999999
+        for (i = 1; i <= child_count[id]; i++) {
+            ch = children[id, i]
+            if (!eff_done[ch]) {
+                if (ch_prio[ch] < ch_prio[id]) ch_prio[id] = ch_prio[ch]
+                if (ch_dl[ch] < ch_dl[id]) ch_dl[id] = ch_dl[ch]
+            }
+        }
+        if (!eff_done[id]) {
+            if (prio_key(node_prio[id]) < ch_prio[id]) ch_prio[id] = prio_key(node_prio[id])
+            if (date_key(node_dl_y[id], node_dl_m[id], node_dl_d[id]) < ch_dl[id]) {
+                ch_dl[id] = date_key(node_dl_y[id], node_dl_m[id], node_dl_d[id])
+            }
+        }
+    }
+
+    function cmp_nodes(a, b,    k, ch, da, db, ca, cb, pa, pb) {
+        for (k = 1; k <= length(sort_order); k++) {
+            ch = substr(sort_order, k, 1)
+            if (ch == "d") {
+                if (eff_done[a] != eff_done[b]) return (eff_done[a] < eff_done[b]) ? -1 : 1
+            } else if (ch == "D") {
+                if (eff_done[a] != eff_done[b]) return (eff_done[a] > eff_done[b]) ? -1 : 1
+            } else if (ch == "t") {
+                if (node_title[a] != node_title[b]) return (node_title[a] < node_title[b]) ? -1 : 1
+            } else if (ch == "T") {
+                if (node_title[a] != node_title[b]) return (node_title[a] > node_title[b]) ? -1 : 1
+            } else if (ch == "l") {
+                da = ch_dl[a]; db = ch_dl[b]
+                if (da != db) return (da < db) ? -1 : 1
+            } else if (ch == "L") {
+                da = date_key(node_dl_y[a], node_dl_m[a], node_dl_d[a])
+                db = date_key(node_dl_y[b], node_dl_m[b], node_dl_d[b])
+                if (da != db) {
+                    if (da == 99999999) return 1
+                    if (db == 99999999) return -1
+                    return (da > db) ? -1 : 1
+                }
+            } else if (ch == "c") {
+                ca = node_cat_str[a]; cb = node_cat_str[b]
+                if (ca != cb) return (ca < cb) ? -1 : 1
+            } else if (ch == "C") {
+                ca = node_cat_str[a]; cb = node_cat_str[b]
+                if (ca != cb) return (ca > cb) ? -1 : 1
+            } else if (ch == "p") {
+                pa = ch_prio[a]; pb = ch_prio[b]
+                if (pa != pb) return (pa < pb) ? -1 : 1
+            } else if (ch == "P") {
+                pa = prio_key(node_prio[a]); pb = prio_key(node_prio[b])
+                if (pa != pb) {
+                    if (pa == 6) return 1
+                    if (pb == 6) return -1
+                    return (pa > pb) ? -1 : 1
+                }
+            } else if (ch == "u") {
+                if (node_order[a] != node_order[b]) return (node_order[a] < node_order[b]) ? -1 : 1
+            } else if (ch == "U") {
+                if (node_order[a] != node_order[b]) return (node_order[a] > node_order[b]) ? -1 : 1
+            }
+        }
+        return (node_order[a] < node_order[b]) ? -1 : 1
+    }
+
+    function sort_children(parent,    n, i, j, tmp) {
+        n = child_count[parent]
+        for (i = 2; i <= n; i++) {
+            tmp = children[parent, i]
+            j = i - 1
+            while (j >= 1 && cmp_nodes(tmp, children[parent, j]) < 0) {
+                children[parent, j + 1] = children[parent, j]
+                j--
+            }
+            children[parent, j + 1] = tmp
+        }
+        for (i = 1; i <= n; i++) {
+            sort_children(children[parent, i])
+        }
+    }
+
+    function walk(id,    d, ind, box, out_line, n_lines, arr, k, suffix) {
+        d = node_depth[id]
+        ind = make_indent(d)
+        box = node_done[id] ? "[x]" : "[ ]"
+        out_line = ind "- " box
+        if (node_title[id] != "") out_line = out_line " " node_title[id]
+        if (node_prio[id] != "" && node_prio[id] != "0") out_line = out_line " !" node_prio[id]
+        if (node_cats[id] != "") out_line = out_line " " node_cats[id]
+        if (node_dl_d[id] != "" && node_dl_m[id] != "" && node_dl_y[id] != "") {
+            out_line = out_line sprintf(" @due(%02d.%02d.%04d)", node_dl_d[id]+0, node_dl_m[id]+0, node_dl_y[id]+0)
+        }
+        if (node_sc_d[id] != "" && node_sc_m[id] != "" && node_sc_y[id] != "") {
+            if (node_sc_pos[id] != "" && node_sc_pos[id]+0 > 1) {
+                out_line = out_line sprintf(" @sched(%02d.%02d.%04d#%d)", node_sc_d[id]+0, node_sc_m[id]+0, node_sc_y[id]+0, node_sc_pos[id]+0)
+            } else {
+                out_line = out_line sprintf(" @sched(%02d.%02d.%04d)", node_sc_d[id]+0, node_sc_m[id]+0, node_sc_y[id]+0)
+            }
+        }
+        if (node_collapse[id]) out_line = out_line " [+]"
+        print out_line
+
+        if (node_text[id] != "") {
+            n_lines = split(node_text[id], arr, "\n")
+            while (n_lines > 0 && arr[n_lines] == "") n_lines--
+            for (k = 1; k <= n_lines; k++) {
+                if (arr[k] == "") {
+                    print ind "    >"
+                } else {
+                    suffix = (k < n_lines) ? "  " : ""
+                    print ind "    > " arr[k] suffix
+                }
+            }
+            if (child_count[id] > 0) {
+                print ""
+            }
+        }
+
+        for (k = 1; k <= child_count[id]; k++) {
+            walk(children[id, k])
+        }
+    }
+
+    END {
+        compute_chinf(0)
+        sort_children(0)
+        for (r = 1; r <= child_count[0]; r++) {
+            walk(children[0, r])
+        }
+    }
+    ' "$IN_FILE" > "$OUT_FILE"
+}
+
+md_to_xml() {
+    awk '
+    function escape_xml(s) {
+        gsub(/&/, "\\&amp;", s)
+        gsub(/</, "\\&lt;", s)
+        gsub(/>/, "\\&gt;", s)
+        return s
+    }
+
+    function tabs(n,    s, k) {
+        s = ""
+        for (k = 0; k < n; k++) s = s "\t"
+        return s
+    }
+
+    function append_desc_br(id, raw,    s, n, parts, k, seg) {
+        s = raw
+        gsub(/<[bB][rR][ \t]*\/?[ \t]*>/, "\n", s)
+        n = split(s, parts, "\n")
+        for (k = 1; k <= n; k++) {
+            seg = parts[k]
+            sub(/[ ]+$/, "", seg)
+            if (k == n && seg == "" && n > 1) continue
+            if (has_text[id]) {
+                node_text[id] = node_text[id] "\n" seg
+            } else {
+                node_text[id] = seg
+                has_text[id] = 1
+            }
+        }
+    }
+
+    BEGIN {
+        n_nodes = 0
+        sp = 0
+        cur = 0
+    }
+
+    {
+        line = $0
+        sub(/\r$/, "", line)
+        if (line ~ /^[ \t]*$/) next
+
+        # Calculate leading indentation (1 tab = 4 spaces)
+        ind = 0
+        pos = 1
+        len = length(line)
+        while (pos <= len) {
+            ch = substr(line, pos, 1)
+            if (ch == " ") ind += 1
+            else if (ch == "\t") ind += 4
+            else break
+            pos++
+        }
+         body = substr(line, pos)
+
+        # Check if task line: - [ ] or - [x] or * [ ]
+        if (body ~ /^[-*][ \t]+\[[ xX]\]([ \t]|$)/) {
+            mark = substr(body, index(body, "[") + 1, 1)
+            is_done = (mark == "x" || mark == "X") ? 1 : 0
+            rest = body
+            sub(/^[-*][ \t]+\[[ xX]\][ \t]*/, "", rest)
+
+            n_nodes++
+            id = n_nodes
+
+            while (sp > 0 && ind <= indent_stack[sp]) {
+                sp--
+            }
+            parent = (sp > 0) ? node_stack[sp] : 0
+            child_count[parent]++
+            children[parent, child_count[parent]] = id
+
+            sp++
+            indent_stack[sp] = ind
+            node_stack[sp] = id
+            cur = id
+
+            node_done[id] = is_done
+            node_collapse[id] = 0
+            node_prio[id] = ""
+            node_cat_count[id] = 0
+            node_dl_d[id] = ""; node_dl_m[id] = ""; node_dl_y[id] = ""
+            node_sc_d[id] = ""; node_sc_m[id] = ""; node_sc_y[id] = ""; node_sc_pos[id] = "1"
+            node_text[id] = ""
+            has_text[id] = 0
+
+            # Extract inline <br> if present on task line
+            inline_desc = ""
+            if (match(rest, /<[bB][rR][ \t]*\/?[ \t]*>/)) {
+                inline_desc = substr(rest, RSTART + RLENGTH)
+                rest = substr(rest, 1, RSTART - 1)
+            }
+
+            n_tok = split(rest, toks, /[ \t]+/)
+            title = ""
+            for (i = 1; i <= n_tok; i++) {
+                tok = toks[i]
+                if (tok == "") continue
+                if (tok == "[+]") {
+                    node_collapse[id] = 1
+                    continue
+                }
+                if (tok ~ /^![1-5]$/) {
+                    node_prio[id] = substr(tok, 2, 1)
+                    continue
+                }
+                if (tok ~ /^#[^#@!]+$/) {
+                    node_cat_count[id]++
+                    node_cats[id, node_cat_count[id]] = substr(tok, 2)
+                    continue
+                }
+                if (tok ~ /^@due\([0-9]{1,2}[.\/-][0-9]{1,2}[.\/-][0-9]{4}\)$/) {
+                    inner = substr(tok, 6, length(tok) - 6)
+                    split(inner, dparts, /[.\/-]/)
+                    node_dl_d[id] = dparts[1] + 0
+                    node_dl_m[id] = dparts[2] + 0
+                    node_dl_y[id] = dparts[3] + 0
+                    continue
+                }
+                if (tok ~ /^@sched\([0-9]{1,2}[.\/-][0-9]{1,2}[.\/-][0-9]{4}(#[0-9]+)?\)$/) {
+                    inner = substr(tok, 8, length(tok) - 8)
+                    pos_val = 1
+                    if (index(inner, "#") > 0) {
+                        pos_val = substr(inner, index(inner, "#") + 1) + 0
+                        inner = substr(inner, 1, index(inner, "#") - 1)
+                    }
+                    split(inner, sparts, /[.\/-]/)
+                    node_sc_d[id] = sparts[1] + 0
+                    node_sc_m[id] = sparts[2] + 0
+                    node_sc_y[id] = sparts[3] + 0
+                    node_sc_pos[id] = pos_val
+                    continue
+                }
+                title = (title == "" ? tok : title " " tok)
+            }
+            node_title[id] = title
+            if (inline_desc != "") {
+                append_desc_br(id, inline_desc)
+            }
+        } else if (cur > 0) {
+            if (body ~ /^>/) {
+                sub(/^>[ ]?/, "", body)
+            }
+            append_desc_br(cur, body)
+        }
+    }
+
+    function emit_xml(id, depth,    t, done_s, col_s, k) {
+        t = tabs(depth)
+        done_s = node_done[id] ? "yes" : "no"
+        col_s = node_collapse[id] ? "yes" : "no"
+        print t "<todo done=\"" done_s "\" collapse=\"" col_s "\">"
+
+        if (node_title[id] != "") {
+            print t "\t<title>" escape_xml(node_title[id]) "</title>"
+        }
+        if (node_dl_d[id] != "") {
+            print t "\t<deadline>"
+            print t "\t\t<day>" node_dl_d[id] "</day>"
+            print t "\t\t<month>" node_dl_m[id] "</month>"
+            print t "\t\t<year>" node_dl_y[id] "</year>"
+            print t "\t</deadline>"
+        }
+        if (node_prio[id] != "") {
+            print t "\t<priority>" node_prio[id] "</priority>"
+        }
+        for (k = 1; k <= node_cat_count[id]; k++) {
+            print t "\t<category>" escape_xml(node_cats[id, k]) "</category>"
+        }
+        if (has_text[id] && node_text[id] != "") {
+            print t "\t<text>" escape_xml(node_text[id]) "\n</text>"
+        }
+        if (node_sc_d[id] != "") {
+            print t "\t<scheduled>"
+            print t "\t\t<day>" node_sc_d[id] "</day>"
+            print t "\t\t<month>" node_sc_m[id] "</month>"
+            print t "\t\t<year>" node_sc_y[id] "</year>"
+            print t "\t\t<position>" node_sc_pos[id] "</position>"
+            print t "\t</scheduled>"
+        }
+        for (k = 1; k <= child_count[id]; k++) {
+            emit_xml(children[id, k], depth + 1)
+        }
+        print t "</todo>"
+    }
+
+    END {
+        print "<?xml version=\"1.0\"?>"
+        print "<!DOCTYPE tudu SYSTEM \"/usr/share/tudu/tudu.dtd\">"
+        print "<todo>"
+        for (r = 1; r <= child_count[0]; r++) {
+            emit_xml(children[0, r], 1)
+        }
+        print "</todo>"
+    }
+    ' "$IN_FILE" > "$OUT_FILE"
+}
+
+if [[ "$FIRST_CHAR" == "<" ]]; then
+    xml_to_md
+    echo "Converted XML -> Markdown: $IN_FILE -> $OUT_FILE"
+else
+    md_to_xml
+    echo "Converted Markdown -> XML: $IN_FILE -> $OUT_FILE"
+fi

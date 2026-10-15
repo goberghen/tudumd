@@ -1,15 +1,15 @@
 REQUIRE_ACR_VERSION 0.8.2
 
-PKGNAME tudu
-VERSION 0.10.4
+PKGNAME tudumd
+VERSION 0.10.5
 CONTACT Ruben Pollan ; meskio@sindominio.net
-YEAR = 2020 ;
+YEAR = 2026 ;
 
 LANG_CXX!
 
 CXXFLAGS += -Wall -O2 ;
 CPPFLAGS += "" ;
-SRCS += tudu.cc data.cc editor.cc interface.cc window.cc text.cc parser.cc
+SRCS += tudumd.cc data.cc editor.cc interface.cc window.cc text.cc parser.cc
         config.cc date.cc screen.cc scheduler.cc cmd.cc ;
 
 

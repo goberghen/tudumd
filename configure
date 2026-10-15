@@ -102,12 +102,12 @@ done
 : ${INSTALL_PROGRAM_STRIP:=${INSTALL} -m 755 -s}
 : ${INSTALL_MAN:=${INSTALL} -m 444}
 : ${INSTALL_LIB:=${INSTALL} -c}
- PKGNAME='tudu' ; VERSION='0.10.4' ; CONTACT_MAIL="meskio@sindominio.net" ; CONTACT_NAME="Ruben Pollan" ; CONTACT="Ruben Pollan <meskio@sindominio.net>" ;
+ PKGNAME='tudumd' ; VERSION='0.10.5' ; CONTACT_MAIL="meskio@sindominio.net" ; CONTACT_NAME="Ruben Pollan" ; CONTACT="Ruben Pollan <meskio@sindominio.net>" ;
 }
                 
 show_usage() {
 cat <<EOF2
-'configure' configures tudu-0.10.4 to adapt to many kinds of systems.
+'configure' configures tudumd-0.10.5 to adapt to many kinds of systems.
 
 Usage: ./configure [OPTION]... [VAR=VALUE]...
 
@@ -164,7 +164,7 @@ take_environ() {
 }
 
 show_version() {
-echo "tudu-0.10.4 configuration script done with acr v0.9.4.
+echo "tudumd-0.10.5 configuration script done with acr v0.9.4.
 The 'Free Software Foundation' message is only for autodetection.
 Originally written by pancake <youterm.com>."
 exit 0
@@ -187,8 +187,8 @@ case $flag in
 "-V"|"-version"|"--version")
 	show_version ; ;;
 "-r"|"--r"|"--report")
-echo "PKGNAME:   tudu"
-echo "VERSION:   0.10.4"
+echo "PKGNAME:   tudumd"
+echo "VERSION:   0.10.5"
 echo "LANGS:     c++"
 echo "OPTIONAL:  libncursesw"
 	exit 0
@@ -271,7 +271,7 @@ ACR_RMFILES=" test.c test.cxx a.out a.exe"
 
 
 : 
-YEAR="2020"
+YEAR="2026"
 COMPILER=CXX
 HAVE_LANG_CXX=1
 printf "checking for c++ compiler... "
@@ -292,7 +292,7 @@ exit 1
  fi
 CXXFLAGS="${CXXFLAGS} -Wall -O2"
 CPPFLAGS="${CPPFLAGS} "
-SRCS="${SRCS} tudu.cc data.cc editor.cc interface.cc window.cc text.cc parser.cc config.cc date.cc screen.cc scheduler.cc cmd.cc"
+SRCS="${SRCS} tudumd.cc data.cc editor.cc interface.cc window.cc text.cc parser.cc config.cc date.cc screen.cc scheduler.cc cmd.cc"
 check_include() {
 VAR=$1
 INC=$2

@@ -15,18 +15,29 @@ install:
 	mkdir -p $(DESTDIR)$(DATADIR)/$(PKGNAME)
 	$(INSTALL_DATA) tudu.dtd $(DESTDIR)$(DATADIR)/$(PKGNAME)
 	$(INSTALL_DATA) welcome.xml $(DESTDIR)$(DATADIR)/$(PKGNAME)
+	$(INSTALL_DATA) welcome.md $(DESTDIR)$(DATADIR)/$(PKGNAME)
 	mkdir -p $(DESTDIR)$(SYSCONFDIR)
-	$(INSTALL_DATA) tudurc $(DESTDIR)$(SYSCONFDIR)
+	$(INSTALL_DATA) tudumdrc $(DESTDIR)$(SYSCONFDIR)
 	mkdir -p $(DESTDIR)$(MANDIR)/man1
-	$(INSTALL_DATA) tudu.1 $(DESTDIR)$(MANDIR)/man1
+	$(INSTALL_DATA) tudumd.1 $(DESTDIR)$(MANDIR)/man1
+	$(INSTALL_DATA) tuduconvert.1 $(DESTDIR)$(MANDIR)/man1
+	mkdir -p $(DESTDIR)$(DATADIR)/applications
+	$(INSTALL_DATA) tudumd.desktop $(DESTDIR)$(DATADIR)/applications
+	mkdir -p $(DESTDIR)$(DATADIR)/icons/hicolor/scalable/apps
+	$(INSTALL_DATA) tudumd.svg $(DESTDIR)$(DATADIR)/icons/hicolor/scalable/apps
 
 clean:
 
 mrproper: clean
-	rm Makefile
+	rm -f Makefile
 
 uninstall:
-	rm $(DESTDIR)$(DATADIR)/$(PKGNAME)/tudu.dtd
-	rm $(DESTDIR)$(DATADIR)/$(PKGNAME)/welcome.xml
-	rm $(DESTDIR)$(MANDIR)/man1/tudu.1
-	rmdir $(DESTDIR)$(DATADIR)/$(PKGNAME)
+	rm -f $(DESTDIR)$(DATADIR)/$(PKGNAME)/tudu.dtd
+	rm -f $(DESTDIR)$(DATADIR)/$(PKGNAME)/welcome.xml
+	rm -f $(DESTDIR)$(DATADIR)/$(PKGNAME)/welcome.md
+	rm -f $(DESTDIR)$(SYSCONFDIR)/tudumdrc
+	rm -f $(DESTDIR)$(MANDIR)/man1/tudumd.1
+	rm -f $(DESTDIR)$(MANDIR)/man1/tuduconvert.1
+	rm -f $(DESTDIR)$(DATADIR)/applications/tudumd.desktop
+	rm -f $(DESTDIR)$(DATADIR)/icons/hicolor/scalable/apps/tudumd.svg
+	rmdir $(DESTDIR)$(DATADIR)/$(PKGNAME) 2>/dev/null || true
